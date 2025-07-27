@@ -1,0 +1,24 @@
+version
+com    , actualizar com
+borrar
+
+fondo negro antes de 
+
+fijar windows
+
+
+curva ideal vc y vc?
+
+t,Vc,Vr 
+
+carga vc sube vr baja 
+descar bajan las dos 
+
+
+el py genera un cvs con 4 datos, creo que uno intenta ser el ideal ?
+
+
+limites de c y r
+
+
+

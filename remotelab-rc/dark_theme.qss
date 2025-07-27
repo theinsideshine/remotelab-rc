@@ -1,0 +1,51 @@
+QWidget {
+    background-color: #121212;
+    color: #E0E0E0;
+    font-family: 'Segoe UI';
+    font-size: 12pt;
+}
+
+QLineEdit {
+    background-color: #1E1E1E;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 4px 8px;
+    color: #ffffff;
+}
+
+QPushButton {
+    background-color: #2E2E2E;
+    border: 1px solid #555;
+    border-radius: 8px;
+    padding: 6px 12px;
+}
+
+QPushButton:hover {
+    background-color: #3C3C3C;
+}
+
+QPushButton#chargeButton {
+    background-color: #2962FF;
+    color: white;
+}
+
+QPushButton#dischargeButton {
+    background-color: #00C853;
+    color: white;
+}
+
+QPushButton#exportButton {
+    background-color: #424242;
+    color: #CCCCCC;
+}
+
+QGroupBox {
+    border: 1px solid #444;
+    border-radius: 8px;
+    margin-top: 12px;
+    padding: 10px;
+}
+
+QLabel {
+    color: #CCCCCC;
+}
