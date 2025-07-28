@@ -33,6 +33,10 @@ class RCVisualizer(QWidget):
 
         self.model = RCModel()
         self.allow_plot = True  # Permite controlar si se grafica o no
+        self.plot_timer = QTimer()
+        self.plot_timer.timeout.connect(self.update_plot_timer)
+        self.plot_timer.start(100)  # cada 100 ms
+
         self.serial_manager = SerialManager()        
 
         # --- Logo ---
@@ -208,18 +212,15 @@ class RCVisualizer(QWidget):
     def handle_serial_line(self, line):
         print(f"⬅️ Recibido: {line}")
         if line == "END":
-            self.allow_plot = False  # 🔴 Detener gráfico progresivo
+            self.allow_plot = False
             self.charge_button.setVisible(False)
             self.discharge_button.setVisible(True)
             self.save_button.setVisible(True)
-
-            # ✅ Dibujar gráfico final completo
-            self.plot(
+            self.plot(  # aseguro gráfico final completo
                 self.model.time_data,
                 self.model.vc_data,
                 label_real="Vc Real"
             )
-
         else:
             try:
                 t_str, vc_str, vr_str = line.split(",")
@@ -229,17 +230,9 @@ class RCVisualizer(QWidget):
                 self.model.time_data.append(t)
                 self.model.vc_data.append(vc)
                 self.model.vr_data.append(vr)
-
-                # ✅ solo actualiza cada 10 puntos
-                if self.allow_plot and len(self.model.vc_data) % 10 == 0:
-                    QTimer.singleShot(0, lambda: self.plot(
-                        self.model.time_data,
-                        self.model.vc_data,
-                        label_real="Vc Real"
-                    ))
-
             except Exception as e:
                 print(f"❌ Error al parsear línea: {line} — {e}")
+
 
 
 
@@ -255,6 +248,16 @@ class RCVisualizer(QWidget):
         self.model.reset()
         self.model.set_params(r, c)
         self.serial_manager.send_command(command)
+
+
+    def update_plot_timer(self):
+        if self.allow_plot:
+            self.plot(
+                self.model.time_data,
+                self.model.vc_data,
+                label_real="Vc Real"
+            )
+
 
 
 
