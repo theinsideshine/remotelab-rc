@@ -1,53 +1,85 @@
-## gui_rc.py
 import numpy as np
 import serial.tools.list_ports
 from PyQt5.QtWidgets import (
     QWidget, QLabel, QPushButton, QLineEdit, QVBoxLayout,
     QHBoxLayout, QFileDialog, QComboBox
 )
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPixmap
+from PyQt5.QtCore import Qt, QUrl, QSize
+from PyQt5.QtGui import QPixmap, QIcon, QDesktopServices
+
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
-from model_rc import RCModel
-from csv_exporter import save_csv
-from serial_manager import SerialManager
+from core.model_rc import RCModel
+from core.csv_exporter import save_csv
+from core.serial_manager import SerialManager
+from app_config import APP_TITLE, APP_VERSION, GITHUB_URL, WINDOW_TITLE
+from app_config import WINDOW_WIDTH, WINDOW_HEIGHT
+from app_config import RESISTANCE_VALUES, CAPACITANCE_VALUES
 
 class RCVisualizer(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Visualizador RC - UdeMM")
-        self.setMinimumSize(1000, 600)
-        self.resize(1000, 600)
+        self.setWindowTitle(WINDOW_TITLE)
+        self.setFixedSize(WINDOW_WIDTH, WINDOW_HEIGHT)
+
 
         try:
-            with open("dark_theme.qss", "r") as f:
+            with open("gui/dark_theme.qss", "r") as f:
                 self.setStyleSheet(f.read())
         except Exception as e:
             print("No se pudo aplicar el tema:", e)
 
         self.model = RCModel()
-        self.serial_manager = SerialManager()
+        self.serial_manager = SerialManager()        
 
+        # --- Logo ---
         logo = QLabel()
-        logo.setPixmap(QPixmap("udemm_logo.png").scaledToHeight(60, Qt.SmoothTransformation))
+        logo.setPixmap(QPixmap("gui/udemm_logo.png").scaledToHeight(60, Qt.SmoothTransformation))
         logo.setAlignment(Qt.AlignLeft)
 
-        title = QLabel("FACULTAD DE INGENIERÍA - FÍSICA 1\nCARGA Y DESCARGA DE CAPACITOR")
-        title.setStyleSheet("font-size: 16px; font-weight: bold;")
-        title.setAlignment(Qt.AlignCenter)
+        # --- Título ---
+        title = QLabel(APP_TITLE)
+        title.setStyleSheet("font-size: 16px; font-weight: bold; color: white;")
+        title.setAlignment(Qt.AlignLeft)
 
+        # --- GitHub ---
+        github_button = QPushButton()
+        github_button.setIcon(QIcon("assets/github_icon.png"))
+        github_button.setIconSize(QSize(36, 36))  # Tamaño real del ícono
+        github_button.setToolTip("Ver en GitHub")
+        github_button.setFixedSize(40, 40)        # Tamaño del botón
+        github_button.setCursor(Qt.PointingHandCursor)
+        github_button.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(GITHUB_URL)))
+
+
+        # --- Versión ---
+        version_label = QLabel(APP_VERSION)
+        version_label.setStyleSheet("font-size: 12px; color: white;")
+        version_label.setAlignment(Qt.AlignVCenter)
+
+        # --- Layout derecho: GitHub + versión ---
+        right_layout = QHBoxLayout()
+        right_layout.addWidget(github_button)
+        right_layout.addWidget(version_label)
+        right_layout.setAlignment(Qt.AlignRight)
+
+        # --- Layout encabezado ---
         header_layout = QHBoxLayout()
         header_layout.addWidget(logo)
         header_layout.addWidget(title)
         header_layout.addStretch()
+        header_layout.addLayout(right_layout)
 
         self.figure = Figure()
         self.canvas = FigureCanvas(self.figure)
 
-        self.r_input = QLineEdit("10.0")
-        self.c_input = QLineEdit("100")
+        self.r_input = QComboBox()
+        self.c_input = QComboBox()        
+
+        self.r_input.addItems([str(r) for r in RESISTANCE_VALUES])
+        self.c_input.addItems([str(c) for c in CAPACITANCE_VALUES])
+
         self.port_selector = QComboBox()
         self.refresh_ports()
 
@@ -109,19 +141,15 @@ class RCVisualizer(QWidget):
             self.discharge_button.setVisible(False)
             self.save_button.setVisible(False)
 
-
     def disconnect_serial(self):
         self.serial_manager.disconnect()
         print("🔌 Desconectado del puerto serie")
-
         self.charge_button.setVisible(False)
         self.discharge_button.setVisible(False)
         self.save_button.setVisible(False)
-
         self.connect_button.setText("Conectar")
         self.port_selector.setEnabled(True)
         self.refresh_button.setEnabled(True)
-
 
     def toggle_serial_connection(self):
         if self.connect_button.text() == "Conectar":
@@ -131,8 +159,8 @@ class RCVisualizer(QWidget):
 
     def plot(self, time_data, vc_data, label_real="Vc Real"):
         try:
-            R = float(self.r_input.text())
-            C = float(self.c_input.text())
+            R = float(self.r_input.currentText())
+            C = float(self.c_input.currentText())
             Vin = 3.3
             t_sec = np.array(time_data) / 1000.0
             tau = R * C * 1e-6
@@ -159,7 +187,6 @@ class RCVisualizer(QWidget):
 
         ax.legend(facecolor="#1e1e1e", edgecolor="white", labelcolor='white')
         ax.grid(True, color='gray', linestyle='--', linewidth=0.5)
-
         self.canvas.draw()
 
     def export_csv(self):
@@ -168,4 +195,5 @@ class RCVisualizer(QWidget):
             return
         file_name, _ = QFileDialog.getSaveFileName(self, "Guardar CSV", "", "CSV Files (*.csv)")
         if file_name:
-            save_csv(file_name, time_data, vc_data, [0]*len(vc_data))
+            save_csv(file_name, time_data, vc_data, [0] * len(vc_data))
+

@@ -1,0 +1,3 @@
+# Ignorar carpetas de Python compilado
+__pycache__/
+*.py[cod]

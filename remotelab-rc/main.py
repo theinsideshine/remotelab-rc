@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QApplication
 import sys
-from gui_rc import RCVisualizer
+from gui.gui_rc import RCVisualizer
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
