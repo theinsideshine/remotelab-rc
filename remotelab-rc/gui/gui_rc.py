@@ -38,6 +38,8 @@ class RCVisualizer(QWidget):
 
         self.serial_manager = SerialManager()
 
+        self.modo_label = QLabel("")  # Inicialmente vacío
+
         logo = QLabel()
         logo.setPixmap(QPixmap("gui/udemm_logo.png").scaledToHeight(60, Qt.SmoothTransformation))
         logo.setAlignment(Qt.AlignLeft)
@@ -168,7 +170,13 @@ class RCVisualizer(QWidget):
 
         ax.set_xlabel("Tiempo (ms)", color="white")
         ax.set_ylabel("Tensión (V)", color="white")
-        ax.set_title("Simulación RC", color="white")
+
+        # Mostrar el título solo si hay texto definido
+        titulo = self.modo_label.text()
+        if titulo:
+             ax.set_title(titulo, color="#3399FF", fontsize=11)
+
+
         ax.tick_params(colors="white")
         for spine in ax.spines.values():
             spine.set_color("white")
@@ -202,9 +210,8 @@ class RCVisualizer(QWidget):
                 self.model.vc_data.append(vc)
                 self.model.vr_data.append(vr)
 
-                # 🔍 Calcular punto ideal por muestra
                 R = self.model.r
-                C = self.model.c * 1e-6  # µF a F
+                C = self.model.c * 1e-6
                 Vin = 3.3
                 t_sec = t / 1000.0
                 tau = R * C
@@ -223,10 +230,12 @@ class RCVisualizer(QWidget):
         self.model.reset()
         self.model.set_params(r, c)
         self.serial_manager.send_command(command)
+        self.modo_label.setText("Modo: Carga")  # Se mostrará como título del gráfico
 
     def update_plot_timer(self):
         if self.allow_plot:
             self.plot(self.model.time_data, self.model.vc_data, label_real="Vc Real")
+
 
 
 
