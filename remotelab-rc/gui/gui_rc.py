@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt, QUrl, QSize
 from PyQt5.QtGui import QPixmap, QIcon, QDesktopServices
+from PyQt5.QtCore import QTimer  # asegurate de tener este import al principio
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -31,6 +32,7 @@ class RCVisualizer(QWidget):
             print("No se pudo aplicar el tema:", e)
 
         self.model = RCModel()
+        self.allow_plot = True  # Permite controlar si se grafica o no
         self.serial_manager = SerialManager()        
 
         # --- Logo ---
@@ -96,6 +98,8 @@ class RCVisualizer(QWidget):
         self.refresh_button.clicked.connect(self.refresh_ports)
         self.connect_button.clicked.connect(self.toggle_serial_connection)
         self.save_button.clicked.connect(self.export_csv)
+        self.charge_button.clicked.connect(self.iniciar_carga)
+
 
         controls_layout = QHBoxLayout()
         controls_layout.addWidget(QLabel("R (Ω):"))
@@ -130,16 +134,20 @@ class RCVisualizer(QWidget):
         if self.serial_manager.connect(port):
             print(f"✅ Conectado a {port}")
             self.charge_button.setVisible(True)
-            self.discharge_button.setVisible(True)
-            self.save_button.setVisible(True)
+            self.discharge_button.setVisible(False)
+            self.save_button.setVisible(False)
             self.connect_button.setText("Desconectar")
             self.port_selector.setEnabled(False)
             self.refresh_button.setEnabled(False)
+
+            # 🔗 Enlaza el callback de lectura
+            self.serial_manager.read_lines(self.handle_serial_line)
         else:
             print("❌ Falló la conexión serie")
             self.charge_button.setVisible(False)
             self.discharge_button.setVisible(False)
             self.save_button.setVisible(False)
+
 
     def disconnect_serial(self):
         self.serial_manager.disconnect()
@@ -196,4 +204,58 @@ class RCVisualizer(QWidget):
         file_name, _ = QFileDialog.getSaveFileName(self, "Guardar CSV", "", "CSV Files (*.csv)")
         if file_name:
             save_csv(file_name, time_data, vc_data, [0] * len(vc_data))
+
+    def handle_serial_line(self, line):
+        print(f"⬅️ Recibido: {line}")
+        if line == "END":
+            self.allow_plot = False  # 🔴 Detener gráfico progresivo
+            self.charge_button.setVisible(False)
+            self.discharge_button.setVisible(True)
+            self.save_button.setVisible(True)
+
+            # ✅ Dibujar gráfico final completo
+            self.plot(
+                self.model.time_data,
+                self.model.vc_data,
+                label_real="Vc Real"
+            )
+
+        else:
+            try:
+                t_str, vc_str, vr_str = line.split(",")
+                t = float(t_str)
+                vc = float(vc_str)
+                vr = float(vr_str)
+                self.model.time_data.append(t)
+                self.model.vc_data.append(vc)
+                self.model.vr_data.append(vr)
+
+                # ✅ solo actualiza cada 10 puntos
+                if self.allow_plot and len(self.model.vc_data) % 10 == 0:
+                    QTimer.singleShot(0, lambda: self.plot(
+                        self.model.time_data,
+                        self.model.vc_data,
+                        label_real="Vc Real"
+                    ))
+
+            except Exception as e:
+                print(f"❌ Error al parsear línea: {line} — {e}")
+
+
+
+
+
+
+    def iniciar_carga(self):
+        r = float(self.r_input.currentText())
+        c = float(self.c_input.currentText())
+        modo = 0  # 0 = carga
+        self.allow_plot = True  # 🟢 Habilita graficar de nuevo
+        command = f"START,{r},{c},{modo}"
+        self.model.reset()
+        self.model.set_params(r, c)
+        self.serial_manager.send_command(command)
+
+
+
 
