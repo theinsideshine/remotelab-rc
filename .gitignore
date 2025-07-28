@@ -1,3 +1,33 @@
-# Ignorar carpetas de Python compilado
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
+*.so
+
+# VSCode settings
+.vscode/
+*.code-workspace
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# PyInstaller
+*.spec
+
+# Logs / temporary
+*.log
+*.tmp
+*.bak
+
+# CSV de resultados (si no querés trackearlos)
+*.csv
+
+# Entornos virtuales
+env/
+venv/
+.venv/
+
+# Sistema
+.DS_Store
+Thumbs.db

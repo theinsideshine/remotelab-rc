@@ -28,7 +28,7 @@ const int simDataDischargeLength = sizeof(simDataDischarge) / sizeof(DataPoint);
 void setup() {
   Serial.begin(115200);
   delay(1000);
-  Serial.println("Simulador RC Serie - Version V1.06");
+  Serial.println("Simulador RC Serie - Version V2.00");
 }
 
 void loop() {
@@ -37,11 +37,13 @@ void loop() {
     line.trim();
 
     if (line.startsWith("START")) {
-      int modo = 0;  // 0 = carga, 1 = descarga
+      int modo = 0;
 
-      // Analiza si se indica modo, por ejemplo: START,0 o START,1
-      if (line.indexOf(',') > 0) {
-        modo = line.substring(line.indexOf(',') + 1).toInt();
+      // Intenta extraer el modo como el último parámetro
+      int lastComma = line.lastIndexOf(',');
+      if (lastComma > 0) {
+        String lastPart = line.substring(lastComma + 1);
+        modo = lastPart.toInt();
       }
 
       Serial.println("BEGIN");
