@@ -8,7 +8,7 @@ APP_VERSION = "v1.00.0"
 GITHUB_URL = "https://github.com/theinsideshine/remotelab-rc/tree/master/remotelab-rc"
 
 # Valores desplegables para los combos
-RESISTANCE_VALUES = [1.0, 10.0, 47.0, 100.0, 470.0, 1000.0]  # en ohms
+RESISTANCE_VALUES = [1.0, 10.0, 47.0, 100.0, 470.0, 1000.0,10000.0]  # en ohms
 CAPACITANCE_VALUES = [10, 47, 100, 220, 470, 1000]           # en microfaradios
 
 

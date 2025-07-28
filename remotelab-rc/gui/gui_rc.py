@@ -4,9 +4,8 @@ from PyQt5.QtWidgets import (
     QWidget, QLabel, QPushButton, QLineEdit, QVBoxLayout,
     QHBoxLayout, QFileDialog, QComboBox
 )
-from PyQt5.QtCore import Qt, QUrl, QSize
+from PyQt5.QtCore import Qt, QUrl, QSize, QTimer
 from PyQt5.QtGui import QPixmap, QIcon, QDesktopServices
-from PyQt5.QtCore import QTimer  # asegurate de tener este import al principio
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -18,12 +17,12 @@ from app_config import APP_TITLE, APP_VERSION, GITHUB_URL, WINDOW_TITLE
 from app_config import WINDOW_WIDTH, WINDOW_HEIGHT
 from app_config import RESISTANCE_VALUES, CAPACITANCE_VALUES
 
+
 class RCVisualizer(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle(WINDOW_TITLE)
         self.setFixedSize(WINDOW_WIDTH, WINDOW_HEIGHT)
-
 
         try:
             with open("gui/dark_theme.qss", "r") as f:
@@ -32,45 +31,38 @@ class RCVisualizer(QWidget):
             print("No se pudo aplicar el tema:", e)
 
         self.model = RCModel()
-        self.allow_plot = True  # Permite controlar si se grafica o no
+        self.allow_plot = True
         self.plot_timer = QTimer()
         self.plot_timer.timeout.connect(self.update_plot_timer)
-        self.plot_timer.start(100)  # cada 100 ms
+        self.plot_timer.start(100)
 
-        self.serial_manager = SerialManager()        
+        self.serial_manager = SerialManager()
 
-        # --- Logo ---
         logo = QLabel()
         logo.setPixmap(QPixmap("gui/udemm_logo.png").scaledToHeight(60, Qt.SmoothTransformation))
         logo.setAlignment(Qt.AlignLeft)
 
-        # --- Título ---
         title = QLabel(APP_TITLE)
         title.setStyleSheet("font-size: 16px; font-weight: bold; color: white;")
         title.setAlignment(Qt.AlignLeft)
 
-        # --- GitHub ---
         github_button = QPushButton()
         github_button.setIcon(QIcon("assets/github_icon.png"))
-        github_button.setIconSize(QSize(36, 36))  # Tamaño real del ícono
+        github_button.setIconSize(QSize(36, 36))
         github_button.setToolTip("Ver en GitHub")
-        github_button.setFixedSize(40, 40)        # Tamaño del botón
+        github_button.setFixedSize(40, 40)
         github_button.setCursor(Qt.PointingHandCursor)
         github_button.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(GITHUB_URL)))
 
-
-        # --- Versión ---
         version_label = QLabel(APP_VERSION)
         version_label.setStyleSheet("font-size: 12px; color: white;")
         version_label.setAlignment(Qt.AlignVCenter)
 
-        # --- Layout derecho: GitHub + versión ---
         right_layout = QHBoxLayout()
         right_layout.addWidget(github_button)
         right_layout.addWidget(version_label)
         right_layout.setAlignment(Qt.AlignRight)
 
-        # --- Layout encabezado ---
         header_layout = QHBoxLayout()
         header_layout.addWidget(logo)
         header_layout.addWidget(title)
@@ -81,8 +73,7 @@ class RCVisualizer(QWidget):
         self.canvas = FigureCanvas(self.figure)
 
         self.r_input = QComboBox()
-        self.c_input = QComboBox()        
-
+        self.c_input = QComboBox()
         self.r_input.addItems([str(r) for r in RESISTANCE_VALUES])
         self.c_input.addItems([str(c) for c in CAPACITANCE_VALUES])
 
@@ -103,7 +94,6 @@ class RCVisualizer(QWidget):
         self.connect_button.clicked.connect(self.toggle_serial_connection)
         self.save_button.clicked.connect(self.export_csv)
         self.charge_button.clicked.connect(self.iniciar_carga)
-
 
         controls_layout = QHBoxLayout()
         controls_layout.addWidget(QLabel("R (Ω):"))
@@ -143,15 +133,12 @@ class RCVisualizer(QWidget):
             self.connect_button.setText("Desconectar")
             self.port_selector.setEnabled(False)
             self.refresh_button.setEnabled(False)
-
-            # 🔗 Enlaza el callback de lectura
             self.serial_manager.read_lines(self.handle_serial_line)
         else:
             print("❌ Falló la conexión serie")
             self.charge_button.setVisible(False)
             self.discharge_button.setVisible(False)
             self.save_button.setVisible(False)
-
 
     def disconnect_serial(self):
         self.serial_manager.disconnect()
@@ -170,33 +157,21 @@ class RCVisualizer(QWidget):
             self.disconnect_serial()
 
     def plot(self, time_data, vc_data, label_real="Vc Real"):
-        try:
-            R = float(self.r_input.currentText())
-            C = float(self.c_input.currentText())
-            Vin = 3.3
-            t_sec = np.array(time_data) / 1000.0
-            tau = R * C * 1e-6
-            vc_ideal = Vin * (1 - np.exp(-t_sec / tau))
-        except:
-            vc_ideal = []
-
         self.figure.clear()
         ax = self.figure.add_subplot(111)
         self.figure.patch.set_facecolor("#121212")
         ax.set_facecolor("#121212")
 
         ax.plot(time_data, vc_data, label=label_real, color="red")
-        if len(vc_ideal) == len(vc_data):
-            ax.plot(time_data, vc_ideal, label="Vc Ideal", color="white", linestyle="--")
+        if len(self.model.vc_ideal_data) == len(time_data):
+            ax.plot(time_data, self.model.vc_ideal_data, label="Vc Ideal", color="white", linestyle="--")
 
         ax.set_xlabel("Tiempo (ms)", color="white")
         ax.set_ylabel("Tensión (V)", color="white")
         ax.set_title("Simulación RC", color="white")
-
         ax.tick_params(colors="white")
         for spine in ax.spines.values():
             spine.set_color("white")
-
         ax.legend(facecolor="#1e1e1e", edgecolor="white", labelcolor='white')
         ax.grid(True, color='gray', linestyle='--', linewidth=0.5)
         self.canvas.draw()
@@ -216,11 +191,7 @@ class RCVisualizer(QWidget):
             self.charge_button.setVisible(False)
             self.discharge_button.setVisible(True)
             self.save_button.setVisible(True)
-            self.plot(  # aseguro gráfico final completo
-                self.model.time_data,
-                self.model.vc_data,
-                label_real="Vc Real"
-            )
+            self.plot(self.model.time_data, self.model.vc_data, label_real="Vc Real")
         else:
             try:
                 t_str, vc_str, vr_str = line.split(",")
@@ -230,34 +201,32 @@ class RCVisualizer(QWidget):
                 self.model.time_data.append(t)
                 self.model.vc_data.append(vc)
                 self.model.vr_data.append(vr)
+
+                # 🔍 Calcular punto ideal por muestra
+                R = self.model.r
+                C = self.model.c * 1e-6  # µF a F
+                Vin = 3.3
+                t_sec = t / 1000.0
+                tau = R * C
+                vc_ideal = Vin * (1 - np.exp(-t_sec / tau))
+                self.model.vc_ideal_data.append(vc_ideal)
+
             except Exception as e:
                 print(f"❌ Error al parsear línea: {line} — {e}")
-
-
-
-
-
-
 
     def iniciar_carga(self):
         r = float(self.r_input.currentText())
         c = float(self.c_input.currentText())
         modo = 0  # 0 = carga
-        self.allow_plot = True  # 🟢 Habilita graficar de nuevo
+        self.allow_plot = True
         command = f"START,{r},{c},{modo}"
         self.model.reset()
         self.model.set_params(r, c)
         self.serial_manager.send_command(command)
 
-
     def update_plot_timer(self):
         if self.allow_plot:
-            self.plot(
-                self.model.time_data,
-                self.model.vc_data,
-                label_real="Vc Real"
-            )
-
+            self.plot(self.model.time_data, self.model.vc_data, label_real="Vc Real")
 
 
 
