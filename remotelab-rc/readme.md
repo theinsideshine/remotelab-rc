@@ -23,15 +23,22 @@ Este proyecto se enmarca dentro de una experiencia educativa desarrollada en la 
 
 ---
 
-## 🖼️ Capturas sugeridas
 
-Inserta estas imágenes en una carpeta `docs/`:
+## 📷 Capturas de pantalla
 
-1. `docs/gui_idle.png` → vista al iniciar, sin conexión.
-2. `docs/gui_connected.png` → vista con puerto conectado, botones activos.
-3. `docs/gui_charge.png` → curva de carga en tiempo real.
-4. `docs/gui_selection.png` → → curva de carga en tiempo real.
-5. `docs/gui_save.png` → luego de guardar CSV.
+### 🟢 Vista al iniciar, sin conexión
+![GUI Idle](docs/gui_idle.png)
+
+### 🔵 Vista con puerto conectado, botones activos
+![GUI Conectada](docs/gui_connected.png)
+
+### 🔴 Curva de carga en tiempo real
+![Curva de carga](docs/gui_charge.png)
+
+### 🛠️ Selección de resistencia y capacitancia
+![Selección RC](docs/gui_selection.png)
+
+
 
 ---
 
