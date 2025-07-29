@@ -35,16 +35,7 @@ Este projeto oferece uma interface gráfica para visualizar e salvar curvas de c
 
 ---
 
-## 🖼️ Sugerencias de imágenes para el README
 
-Colocar en la carpeta `image/` y referenciar desde este README:
-
-1. `image/gui_captura.png` → captura general de la interfaz con gráfica activa.
-2. `image/conectado.png` → modo conectado con botones visibles.
-3. `image/simulador.png` → terminal del simulador enviando datos.
-4. `image/logo_udemm.png` → logo institucional en uso.
-
----
 
 ## 📥 Ejecución rápida
 
@@ -55,6 +46,3 @@ python main.py
 
 ---
 
-## 🔗 Créditos
-
-Desarrollado como proyecto académico en la Universidad de la Marina Mercante (UdeMM).
