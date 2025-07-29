@@ -80,12 +80,5 @@ remotelab-rc/
 └── docs/                 # Imágenes para documentación
 ```
 
----
 
-## 🔗 Enlaces
-
-- [Repositorio GitHub](https://github.com/tu_usuario/remotelab-rc)
-- [Universidad de la Marina Mercante (UdeMM)](https://udemm.edu.ar/)
-
----
 
