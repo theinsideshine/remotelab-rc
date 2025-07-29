@@ -26,7 +26,7 @@ class SerialManager:
         if self.serial and self.serial.is_open:
             try:
                 self.serial.write((command + "\n").encode())
-                print(f"➡️ Enviado: {command}")
+                print(f"Enviado: {command}")
             except Exception as e:
                 print(f"Error enviando comando: {e}")
 
