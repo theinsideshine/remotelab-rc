@@ -38,7 +38,8 @@ Este projeto oferece uma interface gráfica para visualizar e salvar curvas de c
     
     ## 🎥 Video demostrativo
 
-    [![Ver video](docs/gui_charge.png)](https://youtu.be/DysvSuRameE)
+   [![Ver video](https://raw.githubusercontent.com/theinsideshine/remotelab-rc/master/remotelab-rc/docs/gui_charge.png)](https://youtu.be/DysvSuRameE)
+
 
     
 
