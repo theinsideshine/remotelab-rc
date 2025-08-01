@@ -30,8 +30,8 @@ Este proyecto se enmarca dentro de una experiencia educativa desarrollada en la 
 ![GUI Idle](docs/gui_idle.png)
 
 
-### 🔴 Curva de carga en tiempo real
-![Curva de carga](docs/gui_charge.png)
+### 🔴 Conectado
+![Conectado](docs/gui_connected.png)
 
 ### 🛠️ Selección de resistencia y capacitancia
 ![Selección RC](docs/gui_selection.png)
