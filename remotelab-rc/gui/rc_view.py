@@ -149,50 +149,45 @@ class RCView(QWidget):
 
     def set_state_message(self, state: str):
         mensajes = {
-            "not_connected": "",
-            "idle_charge": "Listo para cargar",
-            "charging": "Cargando",
-            "idle_discharge": "Carga finalizada",
-            "discharging": "Descargando",
-            "wait_data": "Esperando datos...",
+        "not_connected": "",
+        "idle_charge": "Listo para cargar",
+        "charging": "Cargando",
+        "idle_discharge": "Listo para descargar",  # ← si querés dejarlo como transición está bien
+        "discharging": "Descargando",
+        "wait_data": "Esperando datos...",
+        "finished_charge": "Carga finalizada - Listo para descargar",
+        "finished_discharge": "Descarga finalizada - Listo para cargar",
         }
         self.modo_label.setText(mensajes.get(state, ""))
 
     def update_buttons(self, state: str):
+        self.connect_button.setVisible(False)
+        self.disconnect_button.setVisible(False)
+        self.charge_button.setVisible(False)
+        self.discharge_button.setVisible(False)
+        self.save_button.setVisible(False)
+
         if state == "not_connected":
             self.connect_button.setVisible(True)
-            self.disconnect_button.setVisible(False)
-            self.charge_button.setVisible(False)
-            self.discharge_button.setVisible(False)
-            self.save_button.setVisible(False)
 
         elif state == "idle_charge":
-            self.connect_button.setVisible(False)
-            self.disconnect_button.setVisible(True)
             self.charge_button.setVisible(True)
-            self.discharge_button.setVisible(False)
-            self.save_button.setVisible(False)
 
         elif state == "charging":
-            self.connect_button.setVisible(False)
-            self.disconnect_button.setVisible(True)
-            self.charge_button.setVisible(True)
-            self.discharge_button.setVisible(False)
-            self.save_button.setVisible(False)
+            pass  # Nada visible
 
-        elif state == "idle_discharge":
-            self.connect_button.setVisible(False)
-            self.disconnect_button.setVisible(True)
-            self.charge_button.setVisible(False)
+        elif state == "finished_charge":
             self.discharge_button.setVisible(True)
             self.save_button.setVisible(True)
 
         elif state == "discharging":
-            self.connect_button.setVisible(False)
-            self.disconnect_button.setVisible(True)
-            self.charge_button.setVisible(False)
-            self.discharge_button.setVisible(True)
-            self.save_button.setVisible(False)
+            pass  # Nada visible
+
+        elif state == "finished_discharge":
+            self.disconnect_button.setVisible(True)  # ← AGREGADO
+            self.charge_button.setVisible(True)
+            self.save_button.setVisible(True)
+
 
 
 

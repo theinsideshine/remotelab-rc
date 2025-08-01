@@ -90,7 +90,12 @@ class RCController:
 
 
     def save_to_csv(self):
-        save_csv(self.model.time_data, self.model.vc_data)
+        save_csv(
+            self.model.time_data,
+            self.model.vc_data,
+            self.model.vr_data,
+            self.model.vc_ideal_data
+        )
 
     def update_model_parameters(self):
         try:
@@ -102,14 +107,18 @@ class RCController:
 
     def handle_serial_data(self, line):
         try:
-            if line.strip().upper() == "END":                
+            if line.strip().upper() == "END":
                 print("Lectura finalizada")
-                self.state = "idle_discharge"
+                if self.model.mode == "charge":
+                    self.state = "finished_charge"
+                else:
+                    self.state = "finished_discharge"
                 self.view.set_state_message(self.state)
                 self.view.update_buttons(self.state)
                 self.view.allow_plot = False
                 self.view.plot(self.model.time_data, self.model.vc_data, label_real="Vc Real")
                 return
+
 
 
             parts = line.split(",")
@@ -126,7 +135,11 @@ class RCController:
             vin = 3.3
             t_sec = t / 1000.0
             tau = r * c
-            vc_ideal = vin * (1 - np.exp(-t_sec / tau))
+            if self.model.mode == "charge":
+                vc_ideal = vin * (1 - np.exp(-t_sec / tau))  # carga
+            else:
+                vc_ideal = vin * np.exp(-t_sec / tau)        # descarga
+
             self.model.vc_ideal_data.append(vc_ideal)
 
             # ❌ NO llamar update_plot_timer acá

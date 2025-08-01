@@ -17,12 +17,12 @@ Este proyecto se enmarca dentro de una experiencia educativa desarrollada en la 
 - **Python 3.10+**
 - **PyQt5**: GUI moderna con tema oscuro.
 - **matplotlib**: Gráficos en tiempo real.
-- **Serial**: Comunicación con el ESP32.
+- **pyserial**: Comunicación con el ESP32.
 - **ESP32-S3**: Dispositivo que mide la carga y descarga real.
-- **GitHub**: Control de versiones y distribución.
+- **Git**: Control de versiones.
+- **VLC / Media Player**: Para visualizar el video de uso.
 
 ---
-
 
 ## 📷 Capturas de pantalla
 
@@ -38,7 +38,17 @@ Este proyecto se enmarca dentro de una experiencia educativa desarrollada en la 
 ### 🛠️ Selección de resistencia y capacitancia
 ![Selección RC](docs/gui_selection.png)
 
+---
 
+## 🎞 Video demostrativo
+
+Se incluye el siguiente video de ejecución grabada:
+
+```
+video/remotelab-rc-ending.mp4
+```
+
+Este video muestra el flujo completo de ejecución: conexión al COM, ejecución de carga y descarga, visualización de curvas y exportación a CSV.
 
 ---
 
@@ -71,14 +81,35 @@ python main.py
 ```
 remotelab-rc/
 │
-├── core/                 # Lógica de negocio: modelo RC, CSV, conexión serie
-├── gui/                  # Interfaz visual en PyQt5
-├── assets/               # Íconos e imágenes
-├── main.py               # Punto de entrada
+├── core/                 # Lógica: modelo RC, CSV, conexión serie
+│   ├── csv_exporter.py
+│   ├── model_rc.py
+│   └── serial_manager.py
+│
+├── gui/                  # Interfaz gráfica PyQt5
+│   ├── rc_controller.py
+│   ├── rc_view.py
+│   ├── gui_rc.py
+│   ├── dark_theme.qss
+│   └── udemm_logo.png
+│
+├── docs/                 # Capturas de pantalla
+│   ├── gui_idle.png
+│   ├── gui_connected.png
+│   ├── gui_charge.png
+│   └── gui_selection.png
+│
+├── video/                # Video demostrativo
+│   └── remotelab-rc-ending.mp4
+│
+├── assets/               # Íconos u otros recursos
 ├── app_config.py         # Configuración general
-├── requirements.txt      # Dependencias
-└── docs/                 # Imágenes para documentación
+├── main.py               # Punto de entrada
+├── requirements.txt      # Dependencias mínimas
+├── .gitignore
+└── README.md
 ```
 
+---
 
 

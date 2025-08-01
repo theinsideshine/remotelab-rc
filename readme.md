@@ -36,12 +36,10 @@ Este projeto oferece uma interface gráfica para visualizar e salvar curvas de c
 ---
 
 
+Se incluye el siguiente video de ejecución grabada:
 
-## 📥 Ejecución rápida
-
-```bash
-pip install -r requirements.txt
-python main.py
+```
+video/remotelab-rc-ending.mp4
 ```
 
 ---
