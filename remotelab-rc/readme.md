@@ -29,8 +29,6 @@ Este proyecto se enmarca dentro de una experiencia educativa desarrollada en la 
 ### 🟢 Vista al iniciar, sin conexión
 ![GUI Idle](docs/gui_idle.png)
 
-### 🔵 Vista con puerto conectado, botones activos
-![GUI Conectada](docs/gui_connected.png)
 
 ### 🔴 Curva de carga en tiempo real
 ![Curva de carga](docs/gui_charge.png)
@@ -40,13 +38,15 @@ Este proyecto se enmarca dentro de una experiencia educativa desarrollada en la 
 
 ---
 
-## 🎞 Video demostrativo
 
-Se incluye el siguiente video de ejecución grabada:
+## 🎥 Video demostrativo
 
-```
-video/remotelab-rc-ending.mp4
-```
+[![Ver video](remotelab-rc/docs/gui_charge.png)](video/remotelab-rc-ending.mp4)
+
+Este video muestra el flujo completo de ejecución: conexión al COM, ejecución de carga y descarga, visualización de curvas y exportación a CSV.
+
+
+Este video muestra el flujo completo de ejecución: conexión al COM, ejecución de carga y descarga, visualización de curvas y exportación a CSV.
 
 Este video muestra el flujo completo de ejecución: conexión al COM, ejecución de carga y descarga, visualización de curvas y exportación a CSV.
 

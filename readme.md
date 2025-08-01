@@ -36,11 +36,14 @@ Este projeto oferece uma interface gráfica para visualizar e salvar curvas de c
 ---
 
 
-Se incluye el siguiente video de ejecución grabada:
+## 🎥 Video demostrativo
 
-```
-video/remotelab-rc-ending.mp4
-```
+[![Ver video](remotelab-rc/docs/gui_charge.png)](video/remotelab-rc-ending.mp4)
 
----
+Este video muestra el flujo completo de ejecución: conexión al COM, ejecución de carga y descarga, visualización de curvas y exportación a CSV.
+
+
+Este video muestra el flujo completo de ejecución: conexión al COM, ejecución de carga y descarga, visualización de curvas y exportación a CSV.
+
+Este video muestra el flujo completo de ejecución: conexión al COM, ejecución de carga y descarga, visualización de curvas y exportación a CSV.
 
