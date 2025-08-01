@@ -41,7 +41,8 @@ Este proyecto se enmarca dentro de una experiencia educativa desarrollada en la 
 
 ## 🎥 Video demostrativo
 
-[![Ver video](docs/gui_charge.png)]([https://youtu.be/DysvSuRameE)
+[![Ver video](docs/gui_charge.png)](https://youtu.be/DysvSuRameE)
+
 
 
 Este video muestra el flujo completo de ejecución: conexión al COM, ejecución de carga y descarga, visualización de curvas y exportación a CSV.
