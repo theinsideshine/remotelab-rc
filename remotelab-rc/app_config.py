@@ -4,7 +4,9 @@
 WINDOW_TITLE = "remoteLab-RC- UdeMM"
 
 APP_TITLE = "FACULTAD DE INGENIERÍA - FÍSICA 1\nCARGA Y DESCARGA DE CAPACITOR"
-APP_VERSION = "v1.00.0"
+# v1.00.1se agrego PING_RC para asegurar la conexion al com
+
+APP_VERSION = "v1.00.1"
 GITHUB_URL = "https://github.com/theinsideshine/remotelab-rc/tree/master/remotelab-rc"
 
 # Valores desplegables para los combos

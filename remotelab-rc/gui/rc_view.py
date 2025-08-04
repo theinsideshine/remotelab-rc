@@ -1,15 +1,10 @@
 from PyQt5.QtWidgets import (
     QWidget, QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QFileDialog, QComboBox
 )
-from PyQt5.QtCore import Qt, QUrl, QSize
+from PyQt5.QtCore import Qt, QUrl, QSize, QTimer
 from PyQt5.QtGui import QPixmap, QIcon, QDesktopServices
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
-
-from PyQt5.QtCore import QTimer
-
-
-
 
 from app_config import (
     APP_TITLE, APP_VERSION, GITHUB_URL, WINDOW_TITLE,
@@ -24,9 +19,9 @@ class RCView(QWidget):
         self.setWindowTitle(WINDOW_TITLE)
         self.setFixedSize(WINDOW_WIDTH, WINDOW_HEIGHT)
 
-        # Inicialización del modelo y serial_manager como None, lo asigna el controlador
         self.model = None
         self.serial_manager = None
+        self.allow_plot = True
 
         try:
             with open("gui/dark_theme.qss", "r") as f:
@@ -34,10 +29,7 @@ class RCView(QWidget):
         except Exception as e:
             print("No se pudo aplicar el tema:", e)
 
-        self.allow_plot = True
-
-        self.modo_label = QLabel("")  # Inicialmente vacío
-
+        self.modo_label = QLabel("")
         logo = QLabel()
         logo.setPixmap(QPixmap("gui/udemm_logo.png").scaledToHeight(60, Qt.SmoothTransformation))
         logo.setAlignment(Qt.AlignLeft)
@@ -88,7 +80,7 @@ class RCView(QWidget):
         self.charge_button.setVisible(False)
         self.discharge_button.setVisible(False)
         self.save_button.setVisible(False)
-        self.disconnect_button.setVisible(False)  # inicia oculto
+        self.disconnect_button.setVisible(False)
 
         controls_layout = QHBoxLayout()
         controls_layout.addWidget(QLabel("R (Ω):"))
@@ -111,36 +103,34 @@ class RCView(QWidget):
         main_layout.addLayout(header_layout)
         main_layout.addWidget(self.canvas)
         main_layout.addLayout(controls_layout)
-
         self.setLayout(main_layout)
 
-        # Al final del __init__ de RCView
         self.plot_timer = QTimer()
         self.plot_timer.timeout.connect(self.update_plot_timer)
         self.plot_timer.start(100)
 
     def plot(self, time_data, vc_data, label_real="Vc Real"):
         self.figure.clear()
-        ax = self.figure.add_subplot(111)
+        self.ax = self.figure.add_subplot(111)
         self.figure.patch.set_facecolor("#121212")
-        ax.set_facecolor("#121212")
+        self.ax.set_facecolor("#121212")
 
-        ax.plot(time_data, vc_data, label=label_real, color="red")
+        self.ax.plot(time_data, vc_data, label=label_real, color="red")
         if self.model and len(self.model.vc_ideal_data) == len(time_data):
-            ax.plot(time_data, self.model.vc_ideal_data, label="Vc Ideal", color="white", linestyle="--")
+            self.ax.plot(time_data, self.model.vc_ideal_data, label="Vc Ideal", color="white", linestyle="--")
 
-        ax.set_xlabel("Tiempo (ms)", color="white")
-        ax.set_ylabel("Tensión (V)", color="white")
+        self.ax.set_xlabel("Tiempo (ms)", color="white")
+        self.ax.set_ylabel("Tensión (V)", color="white")
 
         titulo = self.modo_label.text()
         if titulo:
-            ax.set_title(titulo, color="#3399FF", fontsize=11)
+            self.ax.set_title(titulo, color="#3399FF", fontsize=11)
 
-        ax.tick_params(colors="white")
-        for spine in ax.spines.values():
+        self.ax.tick_params(colors="white")
+        for spine in self.ax.spines.values():
             spine.set_color("white")
-        ax.legend(facecolor="#1e1e1e", edgecolor="white", labelcolor='white')
-        ax.grid(True, color='gray', linestyle='--', linewidth=0.5)
+        self.ax.legend(facecolor="#1e1e1e", edgecolor="white", labelcolor='white')
+        self.ax.grid(True, color='gray', linestyle='--', linewidth=0.5)
         self.canvas.draw()
 
     def update_plot_timer(self):
@@ -149,14 +139,14 @@ class RCView(QWidget):
 
     def set_state_message(self, state: str):
         mensajes = {
-        "not_connected": "",
-        "idle_charge": "Listo para cargar",
-        "charging": "Cargando",
-        "idle_discharge": "Listo para descargar",  # ← si querés dejarlo como transición está bien
-        "discharging": "Descargando",
-        "wait_data": "Esperando datos...",
-        "finished_charge": "Carga finalizada - Listo para descargar",
-        "finished_discharge": "Descarga finalizada - Listo para cargar",
+            "not_connected": "",
+            "idle_charge": "Listo para cargar",
+            "charging": "Cargando",
+            "idle_discharge": "Listo para descargar",
+            "discharging": "Descargando",
+            "wait_data": "Esperando datos...",
+            "finished_charge": "Carga finalizada - Listo para descargar",
+            "finished_discharge": "Descarga finalizada - Listo para cargar",
         }
         self.modo_label.setText(mensajes.get(state, ""))
 
@@ -169,24 +159,37 @@ class RCView(QWidget):
 
         if state == "not_connected":
             self.connect_button.setVisible(True)
-
         elif state == "idle_charge":
             self.charge_button.setVisible(True)
-
         elif state == "charging":
-            pass  # Nada visible
-
+            pass
         elif state == "finished_charge":
             self.discharge_button.setVisible(True)
             self.save_button.setVisible(True)
-
         elif state == "discharging":
-            pass  # Nada visible
-
+            pass
         elif state == "finished_discharge":
-            self.disconnect_button.setVisible(True)  # ← AGREGADO
+            self.disconnect_button.setVisible(True)
             self.charge_button.setVisible(True)
             self.save_button.setVisible(True)
+
+    def clear_plot(self):
+        self.figure.clear()
+        self.ax = self.figure.add_subplot(111)
+        self.figure.patch.set_facecolor("#121212")
+        self.ax.set_facecolor("#121212")
+
+        self.ax.set_xlabel("Tiempo (ms)", color="white")
+        self.ax.set_ylabel("Tensión (V)", color="white")
+        self.ax.tick_params(colors="white")
+
+        for spine in self.ax.spines.values():
+            spine.set_color("white")
+
+        self.ax.grid(True, color='gray', linestyle='--', linewidth=0.5)
+        self.canvas.draw()
+
+
 
 
 

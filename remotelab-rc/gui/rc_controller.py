@@ -4,6 +4,8 @@ from core.csv_exporter import save_csv
 from core.serial_manager import SerialManager
 from gui.rc_view import RCView
 import numpy as np
+import time  # 👈 necesario para timeout
+
 
 
 
@@ -42,22 +44,58 @@ class RCController:
     def connect_serial(self):
         port = self.view.port_selector.currentText()
         success = self.serial_manager.connect(port)
-        if success:
+        if not success:
+            print(f"❌ No se pudo conectar a {port}")
+            return
+
+        print(f"🔌 Conectado a {port}, verificando dispositivo...")
+        self.serial_manager.send_command("PING_RC")
+
+        # Esperar respuesta por un tiempo (ej. 1 segundo)
+        ack_received = False
+        start_time = time.time()
+        buffer = ""
+
+        while time.time() - start_time < 1.0:
+            line = self.serial_manager.serial.readline().decode(errors="ignore").strip()
+            if line:
+                print(f"Recibido: {line}")
+                if line.upper() == "ACK_RC":
+                    ack_received = True
+                    break
+
+        if ack_received:
+            print("Dispositivo verificado")
             self.state = "idle_charge"
             self.view.set_state_message(self.state)
             self.view.update_buttons(self.state)
             self.serial_manager.read_lines(self.handle_serial_data)
-            print(f"Conectado a {port}")
         else:
-            print(f" No se pudo conectar a {port}")
+            print("El dispositivo conectado no respondió correctamente (esperado: ACK_RC)")
+            self.serial_manager.disconnect()
+
 
 
     def disconnect_serial(self):
         self.serial_manager.disconnect()
         print("Desconectado del puerto serie")
+
+        # 🔄 Volver al estado inicial
         self.state = "not_connected"
         self.view.set_state_message(self.state)
         self.view.update_buttons(self.state)
+        self.view.allow_plot = False
+
+        # 🧹 Limpiar datos del modelo
+        self.model.reset()
+        self.model.vc_ideal_data.clear()
+        self.model.time_data.clear()
+        self.model.vc_data.clear()
+        self.model.vr_data.clear()
+
+        # 🖼️ Borrar gráfico
+        self.view.clear_plot()
+
 
 
     def send_charge_command(self):
@@ -107,6 +145,8 @@ class RCController:
 
     def handle_serial_data(self, line):
         try:
+            print(f"Recibido: {line.strip()}")
+
             if line.strip().upper() == "END":
                 print("Lectura finalizada")
                 if self.model.mode == "charge":
