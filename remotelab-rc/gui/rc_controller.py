@@ -5,8 +5,8 @@ from core.serial_manager import SerialManager
 from gui.rc_view import RCView
 import numpy as np
 import time  # 👈 necesario para timeout
-
-
+from app_config import DISCHARGE_WAIT_MS
+from PyQt5.QtCore import QTimer  # 👈 para programar el PING sin bloquear la UI
 
 
 class RCController:
@@ -17,9 +17,11 @@ class RCController:
         self.view.model = self.model
         self.state = "not_connected"
         self.view.set_state_message(self.state)
-        self.view.update_buttons(self.state)
+        self.view.update_buttons(self.state)        
 
-
+        # 👉 config de espera de descarga inicial (10 s)
+        self.discharge_wait_ms = DISCHARGE_WAIT_MS
+        self.ping_programado = False
 
         self.setup_connections()
         self.refresh_ports()
@@ -34,7 +36,6 @@ class RCController:
         self.view.c_input.currentIndexChanged.connect(self.update_model_parameters)
         self.view.refresh_button.clicked.connect(self.refresh_ports)
 
-
     def refresh_ports(self):
         self.view.port_selector.clear()
         ports = serial.tools.list_ports.comports()
@@ -48,35 +49,33 @@ class RCController:
             print(f"❌ No se pudo conectar a {port}")
             return
 
-        print(f"🔌 Conectado a {port}, verificando dispositivo...")
+        # ✅ Empezar a LEER YA y mostrar TODO lo que llegue del ESP32 (no enviar nada aún)
+        print(f"🔌 Conectado a {port}. Leyendo y mostrando tráfico Serial…")
+        self.serial_manager.read_lines(self.handle_serial_data)
+
+        # 👉 Estrategia pedida: esperar 10s y luego mandar PING_RC
+        self.state = "booting"
+        self.view.set_state_message(f"Esperando descarga inicial ({int(self.discharge_wait_ms/1000)}s)…")
+        self.view.update_buttons("booting")
+        print(f"⏳ Esperando descarga inicial ({int(self.discharge_wait_ms/1000)}s)…")
+        self.ping_programado = True
+        QTimer.singleShot(self.discharge_wait_ms, self._enviar_ping_demorado)
+
+        # Importante: NO hacer el handshake inmediato ni leer ACK acá.
+        # El hilo lector seguirá mostrando todo lo que envíe el ESP.
+
+    def _enviar_ping_demorado(self):
+        # Puede que el usuario haya desconectado antes de que pasen los 10s
+        if not self.ping_programado:
+            return
+        print("📡 10s cumplidos → enviando PING_RC")
         self.serial_manager.send_command("PING_RC")
-
-        # Esperar respuesta por un tiempo (ej. 1 segundo)
-        ack_received = False
-        start_time = time.time()
-        buffer = ""
-
-        while time.time() - start_time < 1.0:
-            line = self.serial_manager.serial.readline().decode(errors="ignore").strip()
-            if line:
-                print(f"Recibido: {line}")
-                if line.upper() == "ACK_RC":
-                    ack_received = True
-                    break
-
-        if ack_received:
-            print("Dispositivo verificado")
-            self.state = "idle_charge"
-            self.view.set_state_message(self.state)
-            self.view.update_buttons(self.state)
-            self.serial_manager.read_lines(self.handle_serial_data)
-        else:
-            print("El dispositivo conectado no respondió correctamente (esperado: ACK_RC)")
-            self.serial_manager.disconnect()
-
-
+        # No bloqueamos; si llega ACK_RC lo vas a ver en consola por handle_serial_data
 
     def disconnect_serial(self):
+        # cancelar ping programado si lo hubiera
+        self.ping_programado = False
+
         self.serial_manager.disconnect()
         print("Desconectado del puerto serie")
 
@@ -95,8 +94,6 @@ class RCController:
 
         # 🖼️ Borrar gráfico
         self.view.clear_plot()
-
-
 
     def send_charge_command(self):
         r = float(self.view.r_input.currentText())
@@ -125,15 +122,22 @@ class RCController:
         self.view.update_buttons(self.state)
         self.view.allow_plot = True
 
-
-
     def save_to_csv(self):
+        # Nombre sugerido: rc_<modo>_R<ohm>_C<uF>_<YYYYMMDD-HHMMSS>.csv
+        modo = self.model.mode or "sinmodo"
+        r = self.model.r          # ohms
+        c = self.model.c          # microfaradios (como usás en la GUI)
+        ts = time.strftime("%Y%m%d-%H%M%S")
+        suggested_name = f"rc_{modo}_R{r:g}ohm_C{c:g}uF_{ts}.csv"
+
         save_csv(
             self.model.time_data,
             self.model.vc_data,
             self.model.vr_data,
-            self.model.vc_ideal_data
+            self.model.vc_ideal_data,
+            suggested_name=suggested_name   # 👈 nuevo parámetro
         )
+
 
     def update_model_parameters(self):
         try:
@@ -145,9 +149,27 @@ class RCController:
 
     def handle_serial_data(self, line):
         try:
-            print(f"Recibido: {line.strip()}")
+            s = line.strip()
+            if not s:
+                return
+            print(f"Recibido: {s}")
 
-            if line.strip().upper() == "END":
+            u = s.upper()
+
+            # ✅ NUEVO: cuando llega ACK_RC, pasar a idle_charge
+            if u == "ACK_RC":
+                print("Dispositivo verificado")
+                self.state = "idle_charge"
+                self.view.set_state_message(self.state)
+                self.view.update_buttons(self.state)
+                return
+
+            # (opcional) si querés loguear READY:
+            if u == "READY":
+                print("READY recibido")
+                return
+
+            if u == "END":
                 print("Lectura finalizada")
                 if self.model.mode == "charge":
                     self.state = "finished_charge"
@@ -158,8 +180,6 @@ class RCController:
                 self.view.allow_plot = False
                 self.view.plot(self.model.time_data, self.model.vc_data, label_real="Vc Real")
                 return
-
-
 
             parts = line.split(",")
             if len(parts) != 3:
@@ -186,4 +206,3 @@ class RCController:
 
         except Exception as e:
             print(f"⚠️ Error al parsear línea: {line} → {e}")
-

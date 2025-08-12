@@ -20,20 +20,41 @@ DataPoint simDataDischarge[] = {
 const int simDataChargeLength = sizeof(simDataCharge) / sizeof(DataPoint);
 const int simDataDischargeLength = sizeof(simDataDischarge) / sizeof(DataPoint);
 
+// ---- Handshake de arranque (igual que firmware real) ----
+#define BOOT_DISCHARGE_MS 6000   // 6 s (si querés 60 s, poné 60000)
+
+bool booting = true;
+unsigned long bootStart = 0;
+
 void setup() {
   Serial.begin(115200);
   delay(1000);
-  Serial.println("Simulador RC Serie - Version V2.10");
+  Serial.println("Simulador RC Serie - Version V2.11");
+
+  // Marca de inicio como en el firmware real (opcional, pero útil)
+  Serial.println("INI_RC");
+
+  bootStart = millis();
 }
 
 void loop() {
+  // Mientras está "descargando", NO atender comandos
+  if (booting) {
+    if (millis() - bootStart >= BOOT_DISCHARGE_MS) {
+      Serial.println("READY");   // recién ahora queda listo
+      booting = false;
+    }
+    return; // ignorar todo hasta que termine el boot
+  }
+
+  // ---- A partir de acá, se atienden comandos por Serial ----
   if (Serial.available()) {
     String line = Serial.readStringUntil('\n');
     line.trim();
 
     // Comando de ping
     if (line == "PING_RC") {
-      Serial.println("ACK_RC");
+      Serial.println("ACK_RC");  // mantener comportamiento existente
     }
 
     // Comando de experimento
@@ -63,4 +84,5 @@ void loop() {
     }
   }
 }
+
 
